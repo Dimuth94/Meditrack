@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - master  # Trigger workflow only on push to the master branch
-
+    paths:
+      - 'patient_record_service/**'  #specify to look at only this path
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,6 +25,7 @@ jobs:
 
       - name: Build Docker image for Patient Record Service
         run: |
+          cd patient_record_service
           docker build -t dimuth94/patient-record-service:latest .
       
       - name: Push Docker image for Patient Record Service

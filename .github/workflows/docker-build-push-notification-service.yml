@@ -3,7 +3,7 @@ name: Build and Push Docker image for Notification Service
 on:
   push:
     branches:
-      - main  # Trigger the workflow on push to the main branch
+      - master  # Trigger the workflow on push to the main branch
 
 jobs:
   build:
