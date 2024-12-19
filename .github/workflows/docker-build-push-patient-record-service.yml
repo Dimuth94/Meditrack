@@ -24,6 +24,7 @@ jobs:
 
       - name: Build Docker image for Patient Record Service
         run: |
+          cd patient_record_service
           docker build -t dimuth94/patient-record-service:latest .
       
       - name: Push Docker image for Patient Record Service
