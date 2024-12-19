@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - master  # Trigger workflow only on push to the master branch
-
+    paths:
+      - 'patient_record_service/**'
 jobs:
   build:
     runs-on: ubuntu-latest
