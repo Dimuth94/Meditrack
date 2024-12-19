@@ -1,0 +1,76 @@
+name: Build, Push, and Deploy to EKS
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to main branch
+  workflow_dispatch:  # Allow manual triggering from GitHub UI
+  
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Docker Buildx for multi-platform builds
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      # Step 3: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 4: Build Docker image for Patient Record Service
+      - name: Build Docker image
+        run: |
+          cd patient_record_service
+          docker build -t dimuth94/patient-record-service:latest .
+
+      # Step 5: Push Docker image to Docker Hub
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push dimuth94/patient-record-service:latest
+
+      # Step 6: Set up AWS CLI
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Step 7: Create or Update EKS Cluster using eksctl (if not already created)
+      - name: Create EKS Cluster with eksctl
+        run: |
+          eksctl create cluster \
+            --name patient-record-cluster \
+            --region ${{ secrets.AWS_REGION }} \
+            --nodegroup-name standard-workers \
+            --node-type t2.micro \
+            --nodes 2 \
+            --nodes-min 1 \
+            --nodes-max 3 \
+            --managed || echo "EKS cluster already exists, skipping creation"
+
+      # Step 8: Update kubeconfig to access the EKS cluster
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name patient-record-cluster
+
+      # Step 9: Deploy Docker image to EKS using kubectl
+      - name: Deploy to EKS
+        run: |
+          kubectl apply -f patient-record-service/deployment.yaml
+          kubectl apply -f patient-record-service/service.yaml
+
+      # Step 10: Check the deployment status
+      - name: Verify Deployment
+        run: |
+          kubectl get pods
+          kubectl get svc
