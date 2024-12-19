@@ -3,7 +3,7 @@ name: Build and Push Docker image for Patient Record Service
 on:
   push:
     branches:
-      - main  # Trigger workflow only on push to the master branch
+      - master  # Trigger workflow only on push to the master branch
 
 jobs:
   build:
