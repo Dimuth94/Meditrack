@@ -102,7 +102,7 @@ def get_db():
 
 
 # API Endpoints
-@app.post("/patients/insert/", response_model=PatientOut)
+@app.post("/patients/", response_model=PatientOut)
 def create_patient(patient: PatientCreate, db: Session = Depends(get_db)):
     db_patient = Patient(**patient.dict())
     db.add(db_patient)
