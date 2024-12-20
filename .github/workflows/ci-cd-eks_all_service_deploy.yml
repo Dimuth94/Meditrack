@@ -71,10 +71,10 @@ jobs:
             --region ${{ secrets.AWS_REGION }} \
             --nodegroup-name standard-workers \
             --node-type t2.small \
-            --nodes 1 \
+            --nodes 2 \
             --nodes-min 1 \
-            --nodes-max 2 \
-            --managed || echo "EKS cluster already exists, skipping creation"
+            --nodes-max 3 \
+            --managed 
 
       # Step 11: Update kubeconfig to access the EKS cluster
       - name: Update kubeconfig for EKS
