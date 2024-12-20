@@ -1,0 +1,114 @@
+name: CI/CD Pipeline for MediTrack
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to main branch
+  workflow_dispatch:  # Allow manual triggering from GitHub UI
+  
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code from GitHub repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Docker Buildx for multi-platform builds
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      # Step 3: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 4: Build Docker image for patient_record_service
+      - name: Build patient_record_service Docker image
+        run: |
+          cd patient_record_service
+          docker build -t dimuth94/patient-record-service:latest .
+
+      # Step 5: Push patient_record_service Docker image to Docker Hub
+      - name: Push patient_record_service Docker image to Docker Hub
+        run: |
+          docker push dimuth94/patient-record-service:latest
+
+      # Step 6: Build Docker image for appointment_scheduling_service
+      - name: Build appointment_scheduling_service Docker image
+        run: |
+          cd appointment_scheduling_service
+          docker build -t dimuth94/appointment-scheduling-service:latest .
+
+      # Step 7: Push appointment_scheduling_service Docker image to Docker Hub
+      - name: Push appointment_scheduling_service Docker image to Docker Hub
+        run: |
+          docker push dimuth94/appointment-scheduling-service:latest
+
+      # Step 8: Set up AWS CLI and configure credentials
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Step 9: Install eksctl
+      - name: Install eksctl
+        run: |
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.69.0/eksctl_Linux_amd64" --output /tmp/eksctl
+          chmod +x /tmp/eksctl
+          sudo mv /tmp/eksctl /usr/local/bin
+
+      # Step 10: Create or Update EKS Cluster using eksctl (if not already created)
+      - name: Create EKS Cluster with eksctl
+        run: |
+          eksctl create cluster \
+            --name patient-record-cluster \
+            --region ${{ secrets.AWS_REGION }} \
+            --nodegroup-name standard-workers \
+            --node-type t2.micro \
+            --nodes 2 \
+            --nodes-min 1 \
+            --nodes-max 3 \
+            --managed || echo "EKS cluster already exists, skipping creation"
+
+      # Step 11: Update kubeconfig to access the EKS cluster
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name patient-record-cluster
+
+      # Step 12: Deploy to EKS using Blue-Green Deployment for both services
+      - name: Deploy to EKS using Blue-Green Deployment
+        run: |
+          # Deploy patient_record_service to Green environment
+          kubectl set image deployment/patient-record-service-deployment patient-record-service=dimuth94/patient-record-service:latest --record
+          kubectl rollout status deployment/patient-record-service-deployment
+
+          # Deploy appointment_scheduling_service to Green environment
+          kubectl set image deployment/appointment-scheduling-service-deployment appointment-scheduling-service=dimuth94/appointment-scheduling-service:latest --record
+          kubectl rollout status deployment/appointment-scheduling-service-deployment
+
+          # Switch traffic to Green (make Green live)
+          kubectl set env deployment/patient-record-service-deployment ENV=Green
+          kubectl set env deployment/appointment-scheduling-service-deployment ENV=Green
+
+       # Step 10: Check the deployment status
+      - name: Verify Deployment
+        run: |
+          kubectl get pods
+          kubectl get svc
+
+      # Step 13: Run automated integration tests after deployment
+      - name: Run integration tests
+        run: |
+          curl -f http://localhost:8000/appointments/1
+          curl -f http://localhost:8001/appointments/1
+
+      # Step 14: Run periodic integration tests (can be scheduled as a separate cron job)
+      - name: Run periodic integration tests
+        run: |
+          curl -f http://localhost:8000/appointments/1
+          curl -f http://localhost:8001/appointments/1
