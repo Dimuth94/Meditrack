@@ -7,7 +7,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Copy the entire project folder (including patient_record_service)
-COPY ../ /app/
+COPY . /app/
 
 # Install dependencies for appointment scheduling service
 RUN pip install --no-cache-dir -r /app/appointment_scheduling_service/requirements.txt
