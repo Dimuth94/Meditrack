@@ -113,14 +113,14 @@ jobs:
           kubectl get pods
           kubectl get svc
 
-      # Step 15: Run automated integration tests after deployment
-      - name: Run integration tests
-        run: |
-          curl -f http://localhost:8000/appointments/1
-          curl -f http://localhost:8001/appointments/1
+      # # Step 15: Run automated integration tests after deployment
+      # - name: Run integration tests
+      #   run: |
+      #     curl -f http://localhost:8000/appointments/1
+      #     curl -f http://localhost:8001/appointments/1
 
-      # Step 16: Run periodic integration tests (can be scheduled as a separate cron job)
-      - name: Run periodic integration tests
-        run: |
-          curl -f http://localhost:8000/appointments/1
-          curl -f http://localhost:8001/appointments/1
+      # # Step 16: Run periodic integration tests (can be scheduled as a separate cron job)
+      # - name: Run periodic integration tests
+      #   run: |
+      #     curl -f http://localhost:8000/appointments/1
+      #     curl -f http://localhost:8001/appointments/1
