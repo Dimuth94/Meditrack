@@ -79,7 +79,18 @@ jobs:
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name patient-record-cluster
 
-      # Step 12: Deploy to EKS using Blue-Green Deployment for both services
+      # Step 12: Deploy to EKS using kubectl (Deployment part)
+      - name: Deploy patient_record_service and appointment_scheduling_service to EKS
+        run: |
+          # Deploy patient_record_service using kubectl
+          kubectl apply -f patient_record_service/deployment.yaml
+          kubectl apply -f patient_record_service/service.yaml
+
+          # Deploy appointment_scheduling_service using kubectl
+          kubectl apply -f appointment_scheduling_service/deployment.yaml
+          kubectl apply -f appointment_scheduling_service/service.yaml
+
+      # Step 13: Deploy to EKS using Blue-Green Deployment for both services
       - name: Deploy to EKS using Blue-Green Deployment
         run: |
           # Deploy patient_record_service to Green environment
@@ -94,19 +105,19 @@ jobs:
           kubectl set env deployment/patient-record-service-deployment ENV=Green
           kubectl set env deployment/appointment-scheduling-service-deployment ENV=Green
 
-       # Step 10: Check the deployment status
+       # Step 14: Check the deployment status
       - name: Verify Deployment
         run: |
           kubectl get pods
           kubectl get svc
 
-      # Step 13: Run automated integration tests after deployment
+      # Step 15: Run automated integration tests after deployment
       - name: Run integration tests
         run: |
           curl -f http://localhost:8000/appointments/1
           curl -f http://localhost:8001/appointments/1
 
-      # Step 14: Run periodic integration tests (can be scheduled as a separate cron job)
+      # Step 16: Run periodic integration tests (can be scheduled as a separate cron job)
       - name: Run periodic integration tests
         run: |
           curl -f http://localhost:8000/appointments/1
