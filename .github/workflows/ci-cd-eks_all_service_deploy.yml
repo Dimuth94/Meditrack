@@ -94,16 +94,16 @@ jobs:
       - name: Deploy to EKS using Blue-Green Deployment
         run: |
           # Deploy patient_record_service to Green environment
-          kubectl set image deployment/patient-record-service-deployment patient-record-service=dimuth94/patient-record-service:latest --record
-          kubectl rollout status deployment/patient-record-service-deployment
+          kubectl set image deployment/patient-record-service patient-record-service=dimuth94/patient-record-service:latest --record
+          kubectl rollout status deployment/patient-record-service
 
           # Deploy appointment_scheduling_service to Green environment
-          kubectl set image deployment/appointment-scheduling-service-deployment appointment-scheduling-service=dimuth94/appointment-scheduling-service:latest --record
-          kubectl rollout status deployment/appointment-scheduling-service-deployment
+          kubectl set image deployment/appointment-scheduling-service appointment-scheduling-service=dimuth94/appointment-scheduling-service:latest --record
+          kubectl rollout status deployment/appointment-scheduling-service
 
           # Switch traffic to Green (make Green live)
-          kubectl set env deployment/patient-record-service-deployment ENV=Green
-          kubectl set env deployment/appointment-scheduling-service-deployment ENV=Green
+          kubectl set env deployment/patient-record-service ENV=Green
+          kubectl set env deployment/appointment-scheduling-service ENV=Green
 
        # Step 14: Check the deployment status
       - name: Verify Deployment
