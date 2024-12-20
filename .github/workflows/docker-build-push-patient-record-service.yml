@@ -3,9 +3,10 @@ name: Build and Push Docker image for Patient Record Service
 on:
   push:
     branches:
-      - master  # Trigger workflow only on push to the master branch
-    paths:
-      - 'patient_record_service/**'  #specify to look at only this path
+      - main  # Trigger workflow only on push to the master branch
+  workflow_dispatch:  # Allow manual triggering from GitHub UI  
+    #paths:
+     # - 'patient_record_service/**'  #specify to look at only this path
 jobs:
   build:
     runs-on: ubuntu-latest
