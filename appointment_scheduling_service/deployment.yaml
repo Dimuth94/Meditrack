@@ -16,4 +16,4 @@ spec:
         - name: appointment-scheduling-service
           image: dimuth94/appointment-scheduling-service:latest
           ports:
-            - containerPort: 8000
+            - containerPort: 8001

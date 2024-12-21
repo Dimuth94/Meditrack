@@ -7,6 +7,6 @@ spec:
     app: appointment-scheduling-service
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 8000
+      port: 81
+      targetPort: 8001
   type: LoadBalancer
